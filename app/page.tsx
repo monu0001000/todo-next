@@ -1,45 +1,53 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 
-export default function TodoApp() {
-  const [tasks, setTasks] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+export default function Home() {
+  const [task, setTask] = useState("");
+  const [tasks, setTasks] = useState([]);
 
-  const addTask = () => {
-    if (input.trim()) {
-      setTasks([...tasks, input]);
-      setInput('');
-    }
-  };
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
-  const deleteTask = (index: number) => {
-    setTasks(tasks.filter((_, i) => i !== index));
-  };
+  async function fetchTasks() {
+    const response = await fetch("/api/tasks");
+    const data = await response.json();
+    setTasks(data);
+  }
+
+  async function handleAddTask() {
+    if (task.trim() === "") return;
+    
+    const response = await fetch("/api/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ task: task }),
+    });
+    
+    const data = await response.json();
+    setTasks(data.tasks);
+    setTask("");
+  }
 
   return (
     <div>
-      <h1>Todo</h1>
-
-      <div>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && addTask()}
-          placeholder="Add task..."
-        />
-        <button onClick={addTask}>Add</button>
-      </div>
-
-      <div>
-        {tasks.map((task, i) => (
-          <div key={i}>
-            <span>{task}</span>
-            <button onClick={() => deleteTask(i)}>Delete</button>
-          </div>
+      <h1>My To-Do App</h1>
+      <input 
+        type="text" 
+        placeholder="Enter a task..." 
+        value={task}
+        onChange={(e) => setTask(e.target.value)}
+      />
+      <button onClick={handleAddTask}>Add Task</button>
+      
+      <ul>
+        {tasks.map((t, index) => (
+          <li key={index}>{t}</li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
